@@ -5,6 +5,7 @@ from contextlib import closing
 from tqdm import tqdm
 import time
 import certifi
+import opencc
 
 """
     Author:
@@ -24,13 +25,22 @@ delay = 2
 # 最大重试次数
 max_retries = 5  
 # 每次重试的延迟（秒）
-retry_delay = 2  
+retry_delay = 2
+# 简繁切换标志，用于切换章节名称中的繁体汉字，默认为不切换(False)
+opencc_tag = True
 
 # 确保父目录存在
 os.makedirs(save_dir, exist_ok=True)
 
+# 视情况启用，实验发现由站点的访问限制，实际意义不大
+# 使用Session模拟Cookie
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+}
+session = requests.Session()
+
 # 获取动漫章节链接和章节名
-r = requests.get(url = target_url , verify=certifi.where())
+r = session.get(target_url , headers= headers )
 bs = BeautifulSoup(r.text, 'lxml')
 
 divs = bs.find_all('div', class_='l-box')
@@ -38,6 +48,9 @@ divs = bs.find_all('div', class_='l-box')
 # 获取第二个 div
 if len(divs) > 1:
     div = divs[1]
+# 针对特殊详情页，若无法运行可尝试启用
+# else :
+    # div = divs
 
 list_url = div.find_all('a')
 list_name = div.find_all('span')
@@ -52,9 +65,14 @@ for a in list_url:
 name_tag = False
 num = 1
 str = ['0','1','2','3','4','5','6','7','8','9','I','V','X']
+if opencc_tag :
+    convert = opencc.OpenCC('t2s')
 
 for span in list_name:
     text = span.text.strip()
+    # 简繁切换
+    if opencc_tag :
+        text = convert.convert(text)
     # 由于漫画章节名称含有非法字符字符，应替换，其他非法字符请个人添加，但不要提交pull
     text = text.replace('/','or')
     text = text.replace('?','')
@@ -90,7 +108,7 @@ for i, url in enumerate(tqdm(urls)):
     # 尝试获取章节
     for attempt in range(max_retries):
         try:
-            r = requests.get(url, verify=certifi.where())
+            r = session.get(url, verify=certifi.where())
             break
         except requests.exceptions.RequestException as e:
             print(f"请求链接失败: {e}, 正在重试... (尝试次数: {attempt + 1})")
@@ -108,7 +126,7 @@ for i, url in enumerate(tqdm(urls)):
         # 尝试下载图片
         for attempt in range(max_retries):
             try:
-                with closing(requests.get(url, headers=download_header, stream=True, verify=certifi.        where())) as      response:
+                with closing(session.get(url, headers=download_header, stream=True, verify=certifi.        where())) as      response:
                     if response.status_code == 200:
                         with open(pic_save_path, "wb") as file:
                             for data in response.iter_content(chunk_size=1024):
