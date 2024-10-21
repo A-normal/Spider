@@ -125,3 +125,5 @@ for i, url in enumerate(tqdm(urls)):
                 print(f"请求图片失败: {e}, 正在重试... (尝试次数: {attempt + 1})")
                 time.sleep(retry_delay)  # 暂停一段时间后重试
     time.sleep(delay)
+    
+input('Press Enter To Close……')

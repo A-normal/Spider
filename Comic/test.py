@@ -19,7 +19,7 @@ save_dir = 'D:/IDMLibrary/Comic/女子学院的男生'
 # 由于部分情况获取的仅为相对链接，须补齐完整链接
 pre_url = "https://www.baozimh.com"
 # 目标url，仅支持单部漫画，即链接为漫画主页链接
-target_url = "https://www.baozimh.com/comic/nuzixueyuandenansheng-hongdaomanhua"
+target_url = "https://www.baozimh.com/comic/wodenuyoushielong-mklizhiheng"
 # 章节间请求延迟（秒）
 delay = 2
 # 最大重试次数
@@ -55,14 +55,17 @@ list_name = div.find_all('span')
 names = []
 urls = []
 
+# print(list_name)
+
 for a in list_url:
     href = a.get('href')
     urls.insert(0, pre_url+href)
 
-# 两个章节名称指标，tag用于指示时候获取到的章节是否含有章节数，num用于记录当前章节数（由于漫画默认排序方式问题，索引可能不靠谱）
+# 两个章节名称指标，tag用于指示时候获取到的章节是否含有章节数，num用于记录当前章节数（由于漫画默认排序方式问题，索引可能不靠谱），sum用于指示检测章节数，一般为5
 name_tag = False
 num = 1
-str = ['0','1','2','3','4','5','6','7','8','9','I','V','X']
+sum = 5
+chapters_name_str = ['0','1','2','3','4','5','6','7','8','9','I','V','X']
 if opencc_tag :
     convert = opencc.OpenCC('t2s')
 
@@ -75,15 +78,19 @@ for span in list_name:
     text = text.replace('/','or')
     text = text.replace('?','')
     # 检测漫画名称是否含有章节数（包括数字和罗马字母）
-    if not name_tag :
+    if not name_tag and sum > 0:
         i = 0
-        while i<len(str) :
-            if str[i] in text : 
+        while i<len(chapters_name_str) :
+            if chapters_name_str[i] in text : 
                 name_tag = True
+                sum = 0
                 break
             i+=1
+        sum-=1
     if not name_tag : 
-        names.insert(0, "第" + str(num) + "章" + text)
+        names.insert(0, "第" + str(num) + "章 " + text)
         num+=1
     else : 
         names.insert(0, text)
+
+print(names)
