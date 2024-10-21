@@ -13,12 +13,12 @@ import certifi
 
 # 创建保存目录，请添加漫画名称
 # eg: D:/IDMLibrary/Comic/我在异界当乞丐
-save_dir = 'D:/'
+save_dir = 'D:/IDMLibrary/Comic/女子学院的男生'
 
 # 由于部分情况获取的仅为相对链接，须补齐完整链接
 pre_url = "https://www.baozimh.com"
 # 目标url，仅支持单部漫画，即链接为漫画主页链接
-target_url = "https://www.baozimh.com/comic/wozaiyijiedangqigai-wrectage"
+target_url = "https://www.baozimh.com/comic/nuzixueyuandenansheng-hongdaomanhua"
 # 章节间请求延迟（秒）
 delay = 2
 # 最大重试次数
@@ -48,16 +48,30 @@ for a in list_url:
     href = a.get('href')
     urls.insert(0, pre_url+href)
 
+# 两个章节名称指标，tag用于指示时候获取到的章节是否含有章节数，num用于记录当前章节数（由于漫画默认排序方式问题，索引可能不靠谱）
+name_tag = False
 num = 1
+str = ['0','1','2','3','4','5','6','7','8','9','I','V','X']
 
 for span in list_name:
     text = span.text.strip()
     # 由于漫画章节名称含有非法字符字符，应替换，其他非法字符请个人添加，但不要提交pull
     text = text.replace('/','or')
     text = text.replace('?','')
-    names.insert(0, "第" + str(num) + "章" + text)
-    num+=1
-
+    # 检测漫画名称是否含有章节数（包括数字和罗马字母）
+    if not name_tag :
+        i = 0
+        while i<len(str) :
+            if str[i] in text : 
+                name_tag = True
+                break
+            i+=1
+    if not name_tag : 
+        names.insert(0, "第" + str(num) + "章" + text)
+        num+=1
+    else : 
+        names.insert(0, text)
+    
 # 下载漫画 
 for i, url in enumerate(tqdm(urls)):
     # 简单的反爬措施，指定链接来源
@@ -82,7 +96,6 @@ for i, url in enumerate(tqdm(urls)):
             print(f"请求链接失败: {e}, 正在重试... (尝试次数: {attempt + 1})")
             time.sleep(retry_delay)  # 暂停一段时间后重试
 
-
     html = BeautifulSoup(r.text, 'lxml')
     pics = html.find_all('img')
 
@@ -106,3 +119,4 @@ for i, url in enumerate(tqdm(urls)):
                 print(f"请求图片失败: {e}, 正在重试... (尝试次数: {attempt + 1})")
                 time.sleep(retry_delay)  # 暂停一段时间后重试
     time.sleep(delay)
+input('Press Enter To Colse……')
