@@ -77,6 +77,8 @@ for span in list_name:
     # 由于漫画章节名称含有非法字符字符，应替换，其他非法字符请个人添加，但不要提交pull
     text = text.replace('/','or')
     text = text.replace('?','')
+    if text[-1] == '.' :
+        text = text.replace('.','')
     # 检测漫画名称是否含有章节数（包括数字和罗马字母）
     if not name_tag and sum > 0:
         i = 0
